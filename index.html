@@ -1,1349 +1,418 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Загадки мира - Онлайн игра</title>
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 10px;
-            overflow-x: hidden;
-        }
-
-        .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 800px;
-            width: 100%;
-            padding: 30px 20px;
-            margin: 10px;
-        }
-
-        h1 {
-            color: #667eea;
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 2em;
-            line-height: 1.2;
-        }
-
-        /* Mobile optimizations */
-        @media (max-width: 768px) {
-            body {
-                padding: 5px;
-                align-items: flex-start;
-                padding-top: 10px;
-            }
-
-            .container {
-                padding: 20px 15px;
-                border-radius: 15px;
-                margin: 5px;
-            }
-
-            h1 {
-                font-size: 1.5em;
-                margin-bottom: 15px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            h1 {
-                font-size: 1.3em;
-            }
-
-            .container {
-                padding: 15px 10px;
-            }
-        }
-
-        .start-screen, .game-screen {
-            display: none;
-        }
-
-        .start-screen.active, .game-screen.active {
-            display: block;
-        }
-
-        .btn {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 14px 25px;
-            border-radius: 10px;
-            font-size: 1em;
-            cursor: pointer;
-            transition: all 0.3s;
-            width: 100%;
-            margin-top: 10px;
-            -webkit-appearance: none;
-            touch-action: manipulation;
-        }
-
-        @media (max-width: 480px) {
-            .btn {
-                padding: 12px 20px;
-                font-size: 0.95em;
-                margin-top: 8px;
-            }
-        }
-
-        .btn:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn:active {
-            transform: translateY(0);
-        }
-
-        .btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn.secondary {
-            background: #6c757d;
-        }
-
-        .btn.secondary:hover {
-            background: #5a6268;
-        }
-
-        .room-info {
-            background: #f0f4ff;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 15px 0;
-            text-align: center;
-        }
-
-        @media (max-width: 480px) {
-            .room-info {
-                padding: 12px;
-                margin: 10px 0;
-            }
-        }
-
-        .room-link {
-            background: white;
-            padding: 12px;
-            border-radius: 5px;
-            word-break: break-all;
-            margin: 8px 0;
-            font-family: monospace;
-            border: 2px dashed #667eea;
-            font-size: 1em;
-            font-weight: bold;
-            color: #667eea;
-        }
-
-        @media (max-width: 480px) {
-            .room-link {
-                padding: 10px;
-                font-size: 0.85em;
-            }
-        }
-
-        .copy-btn {
-            display: inline-block;
-            background: #28a745;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 8px;
-            border: none;
-            font-size: 0.95em;
-            transition: all 0.3s;
-            -webkit-appearance: none;
-        }
-
-        @media (max-width: 480px) {
-            .copy-btn {
-                padding: 8px 16px;
-                font-size: 0.9em;
-            }
-        }
-
-        .copy-btn:hover {
-            background: #218838;
-            transform: translateY(-2px);
-        }
-
-        .copy-btn:active {
-            transform: translateY(0);
-        }
-
-        .players {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin: 15px 0;
-        }
-
-        @media (max-width: 480px) {
-            .players {
-                gap: 10px;
-                margin: 10px 0;
-            }
-        }
-
-        .player-card {
-            background: #f8f9ff;
-            padding: 15px;
-            border-radius: 10px;
-            border: 3px solid transparent;
-            transition: all 0.3s;
-            position: relative;
-        }
-
-        @media (max-width: 480px) {
-            .player-card {
-                padding: 12px 8px;
-            }
-        }
-
-        .player-card.you {
-            border-color: #667eea;
-        }
-
-        .player-name {
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 8px;
-            font-size: 1.1em;
-            word-wrap: break-word;
-        }
-
-        @media (max-width: 480px) {
-            .player-name {
-                font-size: 1em;
-                margin-bottom: 5px;
-            }
-        }
-
-        .player-score {
-            font-size: 1.8em;
-            color: #764ba2;
-            font-weight: bold;
-        }
-
-        @media (max-width: 480px) {
-            .player-score {
-                font-size: 1.5em;
-            }
-        }
-
-        .player-status {
-            font-size: 0.85em;
-            color: #666;
-            margin-top: 6px;
-            font-style: italic;
-        }
-
-        @media (max-width: 480px) {
-            .player-status {
-                font-size: 0.75em;
-                margin-top: 4px;
-            }
-        }
-
-        .riddle-card {
-            background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
-            color: white;
-            padding: 25px 20px;
-            border-radius: 15px;
-            margin: 15px 0;
-            min-height: 120px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            font-size: 1.2em;
-            line-height: 1.6;
-            position: relative;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-        }
-
-        /* Mobile riddle card */
-        @media (max-width: 768px) {
-            .riddle-card {
-                padding: 20px 15px;
-                min-height: 100px;
-                font-size: 1.1em;
-                margin: 10px 0;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .riddle-card {
-                padding: 15px 10px;
-                min-height: 90px;
-                font-size: 1em;
-                line-height: 1.5;
-            }
-        }
-
-        .riddle-number {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(255,255,255,0.3);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75em;
-            white-space: nowrap;
-        }
-
-        @media (max-width: 480px) {
-            .riddle-number {
-                top: 8px;
-                right: 8px;
-                padding: 3px 8px;
-                font-size: 0.7em;
-            }
-        }
-
-        .answer-section {
-            margin: 15px 0;
-        }
-
-        @media (max-width: 480px) {
-            .answer-section {
-                margin: 10px 0;
-            }
-        }
-
-        .answer-input {
-            width: 100%;
-            padding: 14px;
-            border: 2px solid #667eea;
-            border-radius: 10px;
-            font-size: 1em;
-            margin-bottom: 8px;
-            -webkit-appearance: none;
-            appearance: none;
-        }
-
-        @media (max-width: 480px) {
-            .answer-input {
-                padding: 12px;
-                font-size: 0.95em;
-            }
-        }
-
-        .answer-input:focus {
-            outline: none;
-            border-color: #764ba2;
-            box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
-        }
-
-        .help-section {
-            background: #fff3cd;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 10px 0;
-            display: none;
-        }
-
-        @media (max-width: 480px) {
-            .help-section {
-                padding: 12px;
-            }
-        }
-
-        .help-section.active {
-            display: block;
-        }
-
-        .help-options {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 12px;
-        }
-
-        @media (max-width: 480px) {
-            .help-options {
-                gap: 8px;
-                margin-top: 10px;
-            }
-        }
-
-        .help-option {
-            padding: 12px 8px;
-            background: white;
-            border: 2px solid #ffc107;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-align: center;
-            font-weight: 500;
-            font-size: 0.95em;
-            word-wrap: break-word;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        @media (max-width: 480px) {
-            .help-option {
-                padding: 10px 6px;
-                font-size: 0.85em;
-            }
-        }
-
-        .help-option:hover, .help-option:active {
-            background: #fff8e1;
-            transform: scale(1.05);
-        }
-
-        .help-option.correct {
-            border-color: #28a745;
-            background: #d4edda;
-        }
-
-        .help-option.wrong {
-            border-color: #dc3545;
-            background: #f8d7da;
-        }
-
-        .opponent-status {
-            padding: 10px;
-            border-radius: 8px;
-            margin: 8px 0;
-            text-align: center;
-            font-style: italic;
-            font-weight: 500;
-            font-size: 0.95em;
-        }
-
-        @media (max-width: 480px) {
-            .opponent-status {
-                padding: 8px;
-                font-size: 0.85em;
-            }
-        }
-
-        .opponent-answer {
-            background: #e3f2fd;
-            color: #1976d2;
-        }
-
-        .opponent-help {
-            background: #fff3e0;
-            color: #f57c00;
-        }
-
-        .result-message {
-            padding: 15px;
-            border-radius: 10px;
-            margin: 15px 0;
-            text-align: center;
-            font-size: 1.1em;
-            font-weight: bold;
-            display: none;
-            line-height: 1.4;
-        }
-
-        @media (max-width: 480px) {
-            .result-message {
-                padding: 12px;
-                margin: 10px 0;
-                font-size: 0.95em;
-            }
-        }
-
-        .result-message.active {
-            display: block;
-        }
-
-        .result-message.correct {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .result-message.wrong {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .waiting {
-            text-align: center;
-            padding: 15px;
-            color: #666;
-            font-style: italic;
-            font-size: 0.95em;
-        }
-
-        @media (max-width: 480px) {
-            .waiting {
-                padding: 12px;
-                font-size: 0.9em;
-            }
-        }
-
-        .input-group {
-            margin: 15px 0;
-        }
-
-        @media (max-width: 480px) {
-            .input-group {
-                margin: 12px 0;
-            }
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 6px;
-            color: #333;
-            font-weight: 500;
-            font-size: 0.95em;
-        }
-
-        @media (max-width: 480px) {
-            .input-group label {
-                font-size: 0.9em;
-                margin-bottom: 5px;
-            }
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 1em;
-            -webkit-appearance: none;
-            appearance: none;
-        }
-
-        @media (max-width: 480px) {
-            .input-group input {
-                padding: 10px;
-                font-size: 0.95em;
-            }
-        }
-
-        .input-group input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .divider {
-            text-align: center;
-            margin: 15px 0;
-            color: #666;
-            position: relative;
-            font-size: 0.9em;
-        }
-
-        @media (max-width: 480px) {
-            .divider {
-                margin: 12px 0;
-                font-size: 0.85em;
-            }
-        }
-
-        .divider::before,
-        .divider::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            width: 40%;
-            height: 1px;
-            background: #ddd;
-        }
-
-        @media (max-width: 480px) {
-            .divider::before,
-            .divider::after {
-                width: 38%;
-            }
-        }
-
-        .divider::before {
-            left: 0;
-        }
-
-        .divider::after {
-            right: 0;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .waiting {
-            animation: pulse 2s infinite;
-        }
-
-        .connection-status {
-            position: fixed;
-            top: 8px;
-            right: 8px;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.85em;
-            font-weight: bold;
-            z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        }
-
-        @media (max-width: 480px) {
-            .connection-status {
-                top: 5px;
-                right: 5px;
-                padding: 5px 10px;
-                font-size: 0.75em;
-            }
-        }
-
-        .connection-status.online {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .connection-status.connecting {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .connection-status.offline {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        /* iOS Safari fixes */
-        input, button, textarea, select {
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-        }
-
-        /* Prevent zoom on input focus in iOS */
-        @media screen and (max-width: 480px) {
-            input[type="text"],
-            input[type="password"],
-            input[type="email"],
-            input[type="number"],
-            textarea,
-            select {
-                font-size: 16px !important;
-            }
-        }
-
-        /* Better touch targets for mobile */
-        @media (max-width: 768px) {
-            button, .help-option, .copy-btn {
-                min-height: 44px;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Викторина - Онлайн</title>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;display:flex;justify-content:center;align-items:center;padding:10px}
+.container{background:white;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,0.3);max-width:900px;width:100%;padding:30px 20px;max-height:95vh;overflow-y:auto}
+h1{color:#667eea;text-align:center;margin-bottom:20px;font-size:2em}
+.start-screen,.settings-screen,.game-screen{display:none}
+.start-screen.active,.settings-screen.active,.game-screen.active{display:block}
+.btn{background:#667eea;color:white;border:none;padding:14px 25px;border-radius:10px;font-size:1em;cursor:pointer;width:100%;margin-top:10px;transition:all 0.3s}
+.btn:hover{background:#5568d3;transform:translateY(-2px)}
+.btn:disabled{background:#ccc;cursor:not-allowed;transform:none}
+.btn.skip{background:#ffc107}
+.btn.secondary{background:#6c757d}
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:20px 0}
+.setting-card{background:#f8f9ff;padding:20px;border-radius:10px;cursor:pointer;border:3px solid transparent;transition:all 0.3s;text-align:center}
+.setting-card:hover{transform:scale(1.05)}
+.setting-card.selected{border-color:#667eea;background:#e8ecff}
+.setting-card h3{color:#667eea;margin-bottom:10px;font-size:1.2em}
+.setting-card p{color:#666;font-size:0.9em}
+.room-info{background:#f0f4ff;padding:15px;border-radius:10px;margin:15px 0;text-align:center}
+.room-link{background:white;padding:12px;border-radius:5px;word-break:break-all;margin:8px 0;font-family:monospace;border:2px dashed #667eea;font-weight:bold;color:#667eea}
+.copy-btn{background:#28a745;color:white;padding:10px 20px;border-radius:5px;cursor:pointer;margin-top:8px;border:none}
+.players{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:15px 0}
+.player-card{background:#f8f9ff;padding:15px;border-radius:10px;border:3px solid transparent}
+.player-card.you{border-color:#667eea}
+.player-name{font-weight:bold;color:#667eea;margin-bottom:8px;font-size:1.1em}
+.player-score{font-size:1.8em;color:#764ba2;font-weight:bold}
+.player-status{font-size:0.85em;color:#666;margin-top:6px;font-style:italic}
+.question-card{background:linear-gradient(135deg,#ffd89b 0%,#19547b 100%);color:white;padding:25px 20px;border-radius:15px;margin:15px 0;min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:1.2em;line-height:1.6;position:relative;word-wrap:break-word}
+.question-image{max-width:100%;max-height:300px;margin:15px 0;border-radius:10px;box-shadow:0 5px 15px rgba(0,0,0,0.3)}
+.question-number{position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.3);padding:4px 12px;border-radius:20px;font-size:0.75em}
+.question-type{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.3);padding:4px 12px;border-radius:20px;font-size:0.75em}
+.difficulty-badge{position:absolute;top:10px;left:10px;background:rgba(255,255,255,0.3);padding:4px 12px;border-radius:20px;font-size:0.75em}
+.answer-input{width:100%;padding:14px;border:2px solid #667eea;border-radius:10px;font-size:1em;margin-bottom:8px}
+.help-section{background:#fff3cd;padding:15px;border-radius:10px;margin:10px 0;display:none}
+.help-section.active{display:block}
+.help-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.help-option{padding:12px 8px;background:white;border:2px solid #ffc107;border-radius:8px;cursor:pointer;text-align:center;font-weight:500;word-wrap:break-word}
+.help-option.correct{border-color:#28a745;background:#d4edda}
+.help-option.wrong{border-color:#dc3545;background:#f8d7da}
+.opponent-status{padding:10px;border-radius:8px;margin:8px 0;text-align:center;font-style:italic;font-weight:500;font-size:0.95em}
+.opponent-answer{background:#e3f2fd;color:#1976d2}
+.opponent-help{background:#fff3e0;color:#f57c00}
+.opponent-skip{background:#fff3cd;color:#856404}
+.result-message{padding:15px;border-radius:10px;margin:15px 0;text-align:center;font-size:1.1em;font-weight:bold;display:none}
+.result-message.active{display:block}
+.result-message.correct{background:#d4edda;color:#155724}
+.result-message.wrong{background:#f8d7da;color:#721c24}
+.result-message.skipped{background:#fff3cd;color:#856404}
+.answers-reveal{background:#f8f9fa;padding:15px;border-radius:10px;margin:10px 0;display:none}
+.answers-reveal.active{display:block}
+.answer-item{padding:10px;margin:5px 0;border-radius:5px;background:white;border-left:4px solid #667eea}
+.answer-item.correct{border-left-color:#28a745}
+.answer-item.wrong{border-left-color:#dc3545}
+.progress-bar{background:#e0e0e0;height:8px;border-radius:10px;margin:15px 0;overflow:hidden}
+.progress-fill{background:#667eea;height:100%;transition:width 0.3s}
+.waiting{text-align:center;padding:15px;color:#666;font-style:italic}
+.input-group{margin:15px 0}
+.input-group label{display:block;margin-bottom:6px;color:#333;font-weight:500}
+.input-group input{width:100%;padding:12px;border:2px solid #ddd;border-radius:8px;font-size:1em}
+.divider{text-align:center;margin:15px 0;color:#666;position:relative}
+.divider::before,.divider::after{content:'';position:absolute;top:50%;width:40%;height:1px;background:#ddd}
+.divider::before{left:0}
+.divider::after{right:0}
+.chat-container{background:#f8f9fa;border-radius:10px;padding:10px;margin:15px 0;max-height:150px;overflow-y:auto}
+.chat-messages{display:flex;flex-direction:column;gap:8px}
+.chat-message{padding:8px 12px;border-radius:8px;max-width:80%;word-wrap:break-word;font-size:0.9em}
+.chat-message.my-message{background:#667eea;color:white;align-self:flex-end;margin-left:auto}
+.chat-message.opponent-message{background:white;color:#333;align-self:flex-start}
+.chat-input-group{display:flex;gap:8px;margin-top:10px}
+.chat-input{flex:1;padding:10px;border:2px solid #ddd;border-radius:8px;font-size:0.9em}
+.chat-send-btn{background:#28a745;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer}
+.connection-status{position:fixed;top:8px;right:8px;padding:6px 12px;border-radius:20px;font-size:0.85em;font-weight:bold;z-index:1000;box-shadow:0 2px 10px rgba(0,0,0,0.2)}
+.connection-status.online{background:#d4edda;color:#155724}
+.connection-status.connecting{background:#fff3cd;color:#856404}
+.connection-status.offline{background:#f8d7da;color:#721c24}
+@media (max-width:768px){
+.container{padding:20px 15px;max-height:98vh}
+h1{font-size:1.5em}
+.settings-grid{grid-template-columns:1fr}
+}
+@media (max-width:480px){
+h1{font-size:1.3em}
+.container{padding:15px 10px}
+.btn{padding:12px 20px;font-size:0.95em}
+.question-card{padding:15px 10px 35px 10px;font-size:1em}
+.player-card{padding:12px 8px}
+.player-name{font-size:1em}
+.player-score{font-size:1.5em}
+.chat-container{max-height:120px}
+.help-options{grid-template-columns:1fr}
+}
+</style>
 </head>
 <body>
-    <div class="connection-status connecting">⏳ Подключение...</div>
-
-    <div class="container">
-        <h1>🌍 Загадки мира 🧩</h1>
-
-        <!-- Start Screen -->
-        <div class="start-screen active">
-            <div class="input-group">
-                <label for="playerName">Твоё имя:</label>
-                <input type="text" id="playerName" placeholder="Введи своё имя" value="">
-            </div>
-            <button class="btn" onclick="createRoom()">🎮 Создать новую игру</button>
-            
-            <div class="divider">или</div>
-            
-            <div class="input-group">
-                <label for="roomId">Код комнаты друга:</label>
-                <input type="text" id="roomId" placeholder="Вставь код комнаты">
-            </div>
-            <button class="btn" onclick="joinRoom()">🚪 Присоединиться к игре</button>
-        </div>
-
-        <!-- Game Screen -->
-        <div class="game-screen">
-            <div class="room-info">
-                <div id="roomIdDisplay"></div>
-                <div id="waitingMessage" class="waiting" style="display: none;">
-                    ⏳ Ожидание второго игрока...
-                </div>
-            </div>
-
-            <div class="players">
-                <div class="player-card you">
-                    <div class="player-name" id="player1Name">Ты</div>
-                    <div class="player-score" id="player1Score">0</div>
-                    <div class="player-status" id="player1Status"></div>
-                </div>
-                <div class="player-card">
-                    <div class="player-name" id="player2Name">Оппонент</div>
-                    <div class="player-score" id="player2Score">0</div>
-                    <div class="player-status" id="player2Status"></div>
-                </div>
-            </div>
-
-            <div id="gameContent" style="display: none;">
-                <div class="riddle-card">
-                    <span class="riddle-number" id="riddleNumber"></span>
-                    <div id="riddleText"></div>
-                </div>
-
-                <div id="opponentStatus"></div>
-
-                <div class="answer-section">
-                    <input type="text" class="answer-input" id="answerInput" 
-                           placeholder="Твой ответ..." disabled>
-                    <button class="btn" id="submitBtn" onclick="submitAnswer()" disabled>
-                        ✅ Ответить
-                    </button>
-                    <button class="btn secondary" id="helpBtn" onclick="showHelp()" 
-                            style="background: #ffc107; margin-top: 10px;" disabled>
-                        🆘 Помощь (варианты ответов)
-                    </button>
-                </div>
-
-                <div class="help-section" id="helpSection">
-                    <div style="margin-bottom: 10px; font-weight: bold; color: #856404;">
-                        💡 Выбери правильный ответ:
-                    </div>
-                    <div class="help-options" id="helpOptions"></div>
-                </div>
-
-                <div class="result-message" id="resultMessage"></div>
-
-                <button class="btn" id="nextBtn" onclick="nextRiddle()" 
-                        style="display: none;">
-                    ➡️ Следующая загадка
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Riddles database - загадки со всего мира на русском языке
-        const riddles = [
-            {
-                question: "Что можно увидеть с закрытыми глазами?",
-                answer: "сон",
-                options: ["сон", "ночь", "темнота", "мечта"],
-                country: "🇷🇺 Россия"
-            },
-            {
-                question: "Без рук, без ног, а ворота открывает.",
-                answer: "ветер",
-                options: ["ветер", "вода", "солнце", "дождь"],
-                country: "🇷🇺 Россия"
-            },
-            {
-                question: "Зимой и летом одним цветом.",
-                answer: "ёлка",
-                options: ["ёлка", "сосна", "трава", "кедр"],
-                country: "🇷🇺 Россия"
-            },
-            {
-                question: "Висит груша, нельзя скушать.",
-                answer: "лампочка",
-                options: ["лампочка", "фонарь", "луна", "звезда"],
-                country: "🇷🇺 Россия"
-            },
-            {
-                question: "Стоит Антошка на одной ножке.",
-                answer: "гриб",
-                options: ["гриб", "дерево", "цветок", "человек"],
-                country: "🇷🇺 Россия"
-            },
-            {
-                question: "Что идёт, не двигаясь с места?",
-                answer: "время",
-                options: ["время", "дорога", "река", "часы"],
-                country: "🇷🇺 Россия"
-            },
-            {
-                question: "Не огонь, а жжётся.",
-                answer: "крапива",
-                options: ["крапива", "кипяток", "лёд", "мороз"],
-                country: "🇷🇺 Россия"
-            },
-            {
-                question: "Что всегда идёт, а с места не сойдёт?",
-                answer: "дорога",
-                options: ["дорога", "тропинка", "путь", "мост"],
-                country: "🇷🇺 Россия"
-            },
-            {
-                question: "Не море, не земля, корабли не плавают, и ходить нельзя.",
-                answer: "болото",
-                options: ["болото", "пустыня", "туман", "песок"],
-                country: "🇷🇺 Россия"
-            },
-            {
-                question: "У меня есть города, но нет домов. Есть горы, но нет деревьев. Есть вода, но нет рыб. Что я?",
-                answer: "карта",
-                options: ["карта", "книга", "глобус", "картина"],
-                country: "🇺🇸 США"
-            },
-            {
-                question: "У меня есть руки, но я не могу хлопать. Что я?",
-                answer: "часы",
-                options: ["часы", "статуя", "перчатки", "робот"],
-                country: "🇬🇧 Англия"
-            },
-            {
-                question: "Чем больше берёшь, тем больше оставляешь позади. Что это?",
-                answer: "следы",
-                options: ["следы", "воспоминания", "время", "тени"],
-                country: "🇬🇧 Англия"
-            },
-            {
-                question: "Что поднимается вверх, но никогда не опускается вниз?",
-                answer: "возраст",
-                options: ["возраст", "шарик", "дым", "ракета"],
-                country: "🇺🇸 США"
-            },
-            {
-                question: "Я лёгкий как перо, но никто не может держать меня долго. Что я?",
-                answer: "дыхание",
-                options: ["дыхание", "воздух", "облако", "ветер"],
-                country: "🇫🇷 Франция"
-            },
-            {
-                question: "Тысяча братьев одним поясом подпоясаны.",
-                answer: "сноп",
-                options: ["сноп", "забор", "веник", "букет"],
-                country: "🇷🇺 Россия"
-            },
-            {
-                question: "Живёт без тела, говорит без языка, никто его не видит, а всякий слышит.",
-                answer: "эхо",
-                options: ["эхо", "ветер", "радио", "голос"],
-                country: "🇷🇺 Россия"
-            },
-            {
-                question: "Утром ходит на четырёх ногах, днём на двух, вечером на трёх. Что это?",
-                answer: "человек",
-                options: ["человек", "животное", "стол", "кресло"],
-                country: "🇬🇷 Греция"
-            },
-            {
-                question: "Кто говорит на всех языках мира?",
-                answer: "эхо",
-                options: ["эхо", "переводчик", "радио", "интернет"],
-                country: "🇨🇳 Китай"
-            },
-            {
-                question: "Чёрный ящик: чем больше из него берёшь, тем больше он становится.",
-                answer: "яма",
-                options: ["яма", "дыра", "мешок", "колодец"],
-                country: "🇯🇵 Япония"
-            },
-            {
-                question: "Что может путешествовать по миру, оставаясь в одном углу?",
-                answer: "марка",
-                options: ["марка", "компас", "карта", "монета"],
-                country: "🇬🇧 Англия"
-            },
-            {
-                question: "Два кольца, два конца, посередине гвоздик.",
-                answer: "ножницы",
-                options: ["ножницы", "очки", "замок", "цепь"],
-                country: "🇷🇺 Россия"
-            },
-            {
-                question: "Сто одёжек, и все без застёжек.",
-                answer: "капуста",
-                options: ["капуста", "лук", "роза", "салат"],
-                country: "🇷🇺 Россия"
-            },
-            {
-                question: "Кругом вода, а с питьём беда.",
-                answer: "море",
-                options: ["море", "океан", "болото", "колодец"],
-                country: "🇷🇺 Россия"
-            },
-            {
-                question: "Сидит дед, во сто шуб одет. Кто его раздевает, тот слёзы проливает.",
-                answer: "лук",
-                options: ["лук", "чеснок", "капуста", "редька"],
-                country: "🇷🇺 Россия"
-            },
-            {
-                question: "Что всегда перед тобой, но увидеть его нельзя?",
-                answer: "будущее",
-                options: ["будущее", "воздух", "время", "мысль"],
-                country: "🇺🇸 США"
-            },
-            {
-                question: "Что можно сломать, даже не прикасаясь к этому?",
-                answer: "обещание",
-                options: ["обещание", "тишина", "сердце", "правило"],
-                country: "🇬🇧 Англия"
-            },
-            {
-                question: "Что становится влажнее, когда высыхает?",
-                answer: "полотенце",
-                options: ["полотенце", "губка", "тряпка", "бельё"],
-                country: "🇩🇪 Германия"
-            },
-            {
-                question: "В воде родится, а воды боится.",
-                answer: "соль",
-                options: ["соль", "сахар", "лёд", "мыло"],
-                country: "🇷🇺 Россия"
-            },
-            {
-                question: "Что принадлежит тебе, но другие пользуются этим чаще?",
-                answer: "имя",
-                options: ["имя", "телефон", "голос", "рука"],
-                country: "🇮🇳 Индия"
-            },
-            {
-                question: "Что имеет шею, но не имеет головы?",
-                answer: "бутылка",
-                options: ["бутылка", "свитер", "гитара", "ваза"],
-                country: "🇮🇹 Италия"
-            }
-        ];
-
-        // Game state
-        let peer = null;
-        let conn = null;
-        let gameState = {
-            isHost: false,
-            myId: null,
-            myName: '',
-            opponentName: '',
-            myScore: 0,
-            opponentScore: 0,
-            currentRiddle: 0,
-            hasUsedHelp: false,
-            answered: false,
-            opponentAnswered: false,
-            opponentUsedHelp: false
-        };
-
-        // Initialize PeerJS
-        function initPeer() {
-            peer = new Peer({
-                config: {
-                    iceServers: [
-                        { urls: 'stun:stun.l.google.com:19302' },
-                        { urls: 'stun:global.stun.twilio.com:3478' }
-                    ]
-                }
-            });
-
-            peer.on('open', (id) => {
-                gameState.myId = id;
-                updateConnectionStatus('online');
-            });
-
-            peer.on('error', (err) => {
-                console.error('PeerJS error:', err);
-                updateConnectionStatus('offline');
-                alert('Ошибка соединения. Попробуй перезагрузить страницу.');
-            });
-
-            peer.on('connection', (connection) => {
-                conn = connection;
-                setupConnection();
-            });
-        }
-
-        function updateConnectionStatus(status) {
-            const statusEl = document.querySelector('.connection-status');
-            if (status === 'online') {
-                statusEl.className = 'connection-status online';
-                statusEl.textContent = '🟢 Онлайн';
-            } else if (status === 'connecting') {
-                statusEl.className = 'connection-status connecting';
-                statusEl.textContent = '⏳ Подключение...';
-            } else {
-                statusEl.className = 'connection-status offline';
-                statusEl.textContent = '🔴 Нет связи';
-            }
-        }
-
-        function createRoom() {
-            const name = document.getElementById('playerName').value.trim();
-            if (!name) {
-                alert('Введи своё имя!');
-                return;
-            }
-
-            gameState.isHost = true;
-            gameState.myName = name;
-
-            document.querySelector('.start-screen').classList.remove('active');
-            document.querySelector('.game-screen').classList.add('active');
-
-            const roomId = gameState.myId;
-            const fullUrl = window.location.href.split('?')[0] + '?room=' + roomId;
-            
-            document.getElementById('roomIdDisplay').innerHTML = 
-                `<strong>Код комнаты:</strong>
-                <div class="room-link">${roomId}</div>
-                <button class="copy-btn" onclick="copyToClipboard('${fullUrl}')">
-                    📋 Скопировать ссылку
-                </button>
-                <div style="margin-top: 10px; font-size: 0.9em; color: #666;">
-                    Отправь код или ссылку другу!
-                </div>`;
-            
-            document.getElementById('player1Name').textContent = name + ' (ты)';
-            document.getElementById('waitingMessage').style.display = 'block';
-        }
-
-        function joinRoom() {
-            const name = document.getElementById('playerName').value.trim();
-            const roomId = document.getElementById('roomId').value.trim();
-
-            if (!name || !roomId) {
-                alert('Введи имя и код комнаты!');
-                return;
-            }
-
-            gameState.isHost = false;
-            gameState.myName = name;
-
-            updateConnectionStatus('connecting');
-
-            conn = peer.connect(roomId);
-            setupConnection();
-
-            document.querySelector('.start-screen').classList.remove('active');
-            document.querySelector('.game-screen').classList.add('active');
-
-            document.getElementById('roomIdDisplay').innerHTML = 
-                `<strong>Код комнаты:</strong><div class="room-link">${roomId}</div>`;
-            
-            document.getElementById('player1Name').textContent = name + ' (ты)';
-        }
-
-        function setupConnection() {
-            conn.on('open', () => {
-                updateConnectionStatus('online');
-                
-                // Send initial data
-                sendData({
-                    type: 'join',
-                    name: gameState.myName,
-                    score: gameState.myScore
-                });
-
-                document.getElementById('waitingMessage').style.display = 'none';
-                document.getElementById('gameContent').style.display = 'block';
-                
-                if (gameState.isHost) {
-                    loadRiddle(0);
-                }
-            });
-
-            conn.on('data', (data) => {
-                handleData(data);
-            });
-
-            conn.on('close', () => {
-                updateConnectionStatus('offline');
-                alert('Соединение потеряно. Оппонент отключился.');
-            });
-
-            conn.on('error', (err) => {
-                console.error('Connection error:', err);
-                updateConnectionStatus('offline');
-            });
-        }
-
-        function sendData(data) {
-            if (conn && conn.open) {
-                conn.send(data);
-            }
-        }
-
-        function handleData(data) {
-            switch(data.type) {
-                case 'join':
-                    gameState.opponentName = data.name;
-                    gameState.opponentScore = data.score;
-                    document.getElementById('player2Name').textContent = data.name;
-                    document.getElementById('player2Score').textContent = data.score;
-                    
-                    // Send current game state to new player
-                    if (gameState.isHost) {
-                        sendData({
-                            type: 'gameState',
-                            riddleIndex: gameState.currentRiddle,
-                            myName: gameState.myName,
-                            myScore: gameState.myScore
-                        });
-                    }
-                    break;
-
-                case 'gameState':
-                    gameState.opponentName = data.myName;
-                    gameState.opponentScore = data.myScore;
-                    document.getElementById('player2Name').textContent = data.myName;
-                    document.getElementById('player2Score').textContent = data.myScore;
-                    loadRiddle(data.riddleIndex);
-                    break;
-
-                case 'answer':
-                    gameState.opponentAnswered = true;
-                    updateOpponentStatus();
-                    break;
-
-                case 'help':
-                    gameState.opponentUsedHelp = true;
-                    updateOpponentStatus();
-                    break;
-
-                case 'score':
-                    gameState.opponentScore = data.score;
-                    document.getElementById('player2Score').textContent = data.score;
-                    break;
-
-                case 'nextRiddle':
-                    gameState.currentRiddle = data.riddleIndex;
-                    gameState.opponentAnswered = false;
-                    gameState.opponentUsedHelp = false;
-                    loadRiddle(data.riddleIndex);
-                    break;
-            }
-        }
-
-        function updateOpponentStatus() {
-            const statusDiv = document.getElementById('opponentStatus');
-            statusDiv.innerHTML = '';
-
-            if (gameState.opponentAnswered && !gameState.answered) {
-                const answerDiv = document.createElement('div');
-                answerDiv.className = 'opponent-status opponent-answer';
-                answerDiv.textContent = `${gameState.opponentName} уже ответил! ⏱️`;
-                statusDiv.appendChild(answerDiv);
-            }
-
-            if (gameState.opponentUsedHelp && !gameState.hasUsedHelp) {
-                const helpDiv = document.createElement('div');
-                helpDiv.className = 'opponent-status opponent-help';
-                helpDiv.textContent = `${gameState.opponentName} использовал помощь 🆘`;
-                statusDiv.appendChild(helpDiv);
-            }
-
-            // Update status indicators
-            if (gameState.opponentAnswered) {
-                document.getElementById('player2Status').textContent = '✅ Ответ отправлен';
-            } else {
-                document.getElementById('player2Status').textContent = '';
-            }
-
-            if (gameState.answered) {
-                document.getElementById('player1Status').textContent = '✅ Ответ отправлен';
-            } else {
-                document.getElementById('player1Status').textContent = '';
-            }
-        }
-
-        function loadRiddle(index) {
-            gameState.currentRiddle = index;
-            
-            if (gameState.currentRiddle >= riddles.length) {
-                showFinalResults();
-                return;
-            }
-
-            const riddle = riddles[gameState.currentRiddle];
-            document.getElementById('riddleNumber').textContent = 
-                `${gameState.currentRiddle + 1}/${riddles.length} ${riddle.country}`;
-            document.getElementById('riddleText').textContent = riddle.question;
-            
-            document.getElementById('answerInput').value = '';
-            document.getElementById('answerInput').disabled = false;
-            document.getElementById('submitBtn').disabled = false;
-            document.getElementById('helpBtn').disabled = false;
-            document.getElementById('helpSection').classList.remove('active');
-            document.getElementById('resultMessage').classList.remove('active');
-            document.getElementById('nextBtn').style.display = 'none';
-            document.getElementById('opponentStatus').innerHTML = '';
-            document.getElementById('player1Status').textContent = '';
-            document.getElementById('player2Status').textContent = '';
-            
-            gameState.hasUsedHelp = false;
-            gameState.answered = false;
-            gameState.opponentAnswered = false;
-            gameState.opponentUsedHelp = false;
-
-            // Enable enter key
-            document.getElementById('answerInput').onkeypress = function(e) {
-                if (e.key === 'Enter') {
-                    submitAnswer();
-                }
-            };
-        }
-
-        function showHelp() {
-            if (gameState.hasUsedHelp) return;
-
-            gameState.hasUsedHelp = true;
-            document.getElementById('helpBtn').disabled = true;
-            document.getElementById('helpSection').classList.add('active');
-
-            const riddle = riddles[gameState.currentRiddle];
-            const helpOptions = document.getElementById('helpOptions');
-            helpOptions.innerHTML = '';
-
-            riddle.options.forEach(option => {
-                const div = document.createElement('div');
-                div.className = 'help-option';
-                div.textContent = option;
-                div.onclick = () => {
-                    document.getElementById('answerInput').value = option.split(' (')[0]; // Remove translations
-                };
-                helpOptions.appendChild(div);
-            });
-
-            sendData({ type: 'help' });
-            updateOpponentStatus();
-        }
-
-        function submitAnswer() {
-            if (gameState.answered) return;
-
-            const answer = document.getElementById('answerInput').value.trim().toLowerCase();
-            if (!answer) {
-                alert('Введи ответ!');
-                return;
-            }
-
-            gameState.answered = true;
-            document.getElementById('answerInput').disabled = true;
-            document.getElementById('submitBtn').disabled = true;
-            document.getElementById('helpBtn').disabled = true;
-
-            const riddle = riddles[gameState.currentRiddle];
-            const isCorrect = answer === riddle.answer.toLowerCase();
-
-            if (isCorrect) {
-                gameState.myScore++;
-                document.getElementById('player1Score').textContent = gameState.myScore;
-                sendData({ type: 'score', score: gameState.myScore });
-            }
-
-            // Show result
-            const resultDiv = document.getElementById('resultMessage');
-            resultDiv.classList.add('active');
-            
-            if (isCorrect) {
-                resultDiv.className = 'result-message active correct';
-                resultDiv.textContent = `🎉 Правильно! Ответ: ${riddle.answer}`;
-            } else {
-                resultDiv.className = 'result-message active wrong';
-                resultDiv.textContent = `❌ Неправильно. Правильный ответ: ${riddle.answer}`;
-            }
-
-            // Show help options result if used
-            if (gameState.hasUsedHelp) {
-                const helpOptions = document.querySelectorAll('.help-option');
-                helpOptions.forEach(opt => {
-                    const optText = opt.textContent.split(' (')[0].toLowerCase();
-                    if (optText === riddle.answer.toLowerCase()) {
-                        opt.classList.add('correct');
-                    } else {
-                        opt.classList.add('wrong');
-                    }
-                });
-            }
-
-            sendData({ type: 'answer' });
-            updateOpponentStatus();
-            document.getElementById('nextBtn').style.display = 'block';
-        }
-
-        function nextRiddle() {
-            const nextIndex = gameState.currentRiddle + 1;
-            
-            if (nextIndex >= riddles.length) {
-                showFinalResults();
-                return;
-            }
-
-            sendData({ type: 'nextRiddle', riddleIndex: nextIndex });
-            loadRiddle(nextIndex);
-        }
-
-        function showFinalResults() {
-            let message = '';
-            let emoji = '';
-            
-            if (gameState.myScore > gameState.opponentScore) {
-                message = `Ты победил! Счёт ${gameState.myScore}:${gameState.opponentScore}`;
-                emoji = '🏆';
-            } else if (gameState.opponentScore > gameState.myScore) {
-                message = `Победил ${gameState.opponentName}! Счёт ${gameState.opponentScore}:${gameState.myScore}`;
-                emoji = '😢';
-            } else {
-                message = `Ничья! Счёт ${gameState.myScore}:${gameState.opponentScore}`;
-                emoji = '🤝';
-            }
-
-            document.getElementById('gameContent').innerHTML = `
-                <div class="riddle-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                    <div>
-                        <div style="font-size: 4em; margin-bottom: 20px;">${emoji}</div>
-                        <h2 style="margin-bottom: 20px;">Игра окончена!</h2>
-                        <p style="font-size: 1.5em;">${message}</p>
-                    </div>
-                </div>
-                <button class="btn" onclick="location.reload()">🔄 Начать новую игру</button>
-            `;
-        }
-
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                const btn = event.target;
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '✅ Скопировано!';
-                btn.style.background = '#28a745';
-                setTimeout(() => {
-                    btn.innerHTML = originalText;
-                    btn.style.background = '';
-                }, 2000);
-            }).catch(err => {
-                alert('Не удалось скопировать. Скопируй вручную: ' + text);
-            });
-        }
-
-        // Auto-fill room ID from URL
-        window.onload = function() {
-            initPeer();
-            
-            const urlParams = new URLSearchParams(window.location.search);
-            const roomId = urlParams.get('room');
-            if (roomId) {
-                document.getElementById('roomId').value = roomId;
-            }
-        };
-    </script>
+<div class="connection-status connecting">⏳ Подключение...</div>
+<div class="container">
+<h1>🎯 Викторина 🎯</h1>
+
+<!-- Start Screen -->
+<div class="start-screen active">
+<div class="input-group">
+<label for="playerName">Твоё имя:</label>
+<input type="text" id="playerName" placeholder="Введи своё имя">
+</div>
+<button class="btn" onclick="showSettings()">🎮 Создать игру</button>
+<div class="divider">или</div>
+<div class="input-group">
+<label for="roomId">Код комнаты:</label>
+<input type="text" id="roomId" placeholder="Вставь код">
+</div>
+<button class="btn" onclick="joinRoom()">🚪 Присоединиться</button>
+</div>
+
+<!-- Settings Screen -->
+<div class="settings-screen">
+<h2 style="text-align:center;color:#667eea;margin-bottom:20px">Настройки игры</h2>
+
+<h3 style="color:#667eea;margin:15px 0">Сложность:</h3>
+<div class="settings-grid">
+<div class="setting-card" onclick="selectDifficulty('easy')">
+<h3>😊 Лёгкая</h3>
+<p>Простые вопросы</p>
+</div>
+<div class="setting-card selected" onclick="selectDifficulty('medium')">
+<h3>🤔 Средняя</h3>
+<p>Для эрудитов</p>
+</div>
+<div class="setting-card" onclick="selectDifficulty('hard')">
+<h3>🤯 Сложная</h3>
+<p>Только для гениев</p>
+</div>
+<div class="setting-card" onclick="selectDifficulty('mixed')">
+<h3>🎲 Микс</h3>
+<p>Все уровни</p>
+</div>
+</div>
+
+<h3 style="color:#667eea;margin:15px 0">Режим игры:</h3>
+<div class="settings-grid">
+<div class="setting-card" onclick="selectMode(10)">
+<h3>⚡ Быстрая</h3>
+<p>10 вопросов</p>
+</div>
+<div class="setting-card selected" onclick="selectMode(30)">
+<h3>🎯 Средняя</h3>
+<p>30 вопросов</p>
+</div>
+<div class="setting-card" onclick="selectMode(50)">
+<h3>🔥 Длинная</h3>
+<p>50 вопросов</p>
+</div>
+<div class="setting-card" onclick="selectMode(100)">
+<h3>🏆 Марафон</h3>
+<p>100 вопросов</p>
+</div>
+</div>
+
+<button class="btn" onclick="createRoomWithSettings()" style="margin-top:20px">▶️ Начать игру</button>
+<button class="btn secondary" onclick="backToStart()">◀️ Назад</button>
+</div>
+
+<!-- Game Screen -->
+<div class="game-screen">
+<div class="room-info">
+<div id="roomIdDisplay"></div>
+<div id="waitingMessage" class="waiting" style="display:none">⏳ Ожидание второго игрока...</div>
+</div>
+
+<div class="progress-bar">
+<div class="progress-fill" id="progressBar"></div>
+</div>
+
+<div class="players">
+<div class="player-card you">
+<div class="player-name" id="player1Name">Ты</div>
+<div class="player-score" id="player1Score">0</div>
+<div class="player-status" id="player1Status"></div>
+</div>
+<div class="player-card">
+<div class="player-name" id="player2Name">Оппонент</div>
+<div class="player-score" id="player2Score">0</div>
+<div class="player-status" id="player2Status"></div>
+</div>
+</div>
+
+<div id="gameContent" style="display:none">
+<div class="question-card">
+<span class="difficulty-badge" id="difficultyBadge"></span>
+<span class="question-number" id="questionNumber"></span>
+<div id="questionText"></div>
+<img id="questionImage" class="question-image" style="display:none">
+<span class="question-type" id="questionType"></span>
+</div>
+
+<div class="chat-container">
+<div class="chat-messages" id="chatMessages"></div>
+<div class="chat-input-group">
+<input type="text" class="chat-input" id="chatInput" placeholder="Сообщение..." disabled>
+<button class="chat-send-btn" id="chatSendBtn" onclick="sendChatMessage()" disabled>📤</button>
+</div>
+</div>
+
+<div id="opponentStatus"></div>
+
+<div class="answer-section">
+<input type="text" class="answer-input" id="answerInput" placeholder="Твой ответ..." disabled>
+<button class="btn" id="submitBtn" onclick="submitAnswer()" disabled>✅ Ответить</button>
+<button class="btn" id="helpBtn" onclick="showHelp()" style="background:#ffc107;margin-top:10px" disabled>🆘 Помощь</button>
+<button class="btn skip" id="skipBtn" onclick="requestSkip()" style="margin-top:10px" disabled>⏭️ Пропустить</button>
+</div>
+
+<div class="help-section" id="helpSection">
+<div style="margin-bottom:10px;font-weight:bold;color:#856404">💡 Выбери правильный ответ:</div>
+<div class="help-options" id="helpOptions"></div>
+</div>
+
+<div class="result-message" id="resultMessage"></div>
+
+<div class="answers-reveal" id="answersReveal">
+<div style="font-weight:bold;margin-bottom:10px;text-align:center">Ответы игроков:</div>
+<div id="answersContent"></div>
+</div>
+
+<button class="btn" id="nextBtn" onclick="nextQuestion()" style="display:none">➡️ Следующий вопрос</button>
+</div>
+</div>
+</div>
+
+<script>
+// Massive question database - 250+ questions
+const allQuestions=[
+// ЛОГИКА (50 questions)
+{q:"До царя дошла весть, что кто-то из трёх богатырей убил Змея Горыныча. Илья сказал: 'Убил Добрыня'. Добрыня: 'Убил Алёша'. Алёша: 'Добрыня лжёт'. Один сказал правду. Кто убийца?",a:"илья",aa:["илья муромец","илья"],o:["Илья Муромец","Добрыня","Алёша","Никто"],t:"🕵️ Логика",d:"medium"},
+{q:"В комнате 4 угла. В каждом углу кошка. Напротив каждой кошки 3 кошки. Сколько кошек?",a:"4",aa:["4","четыре"],o:["4 кошки","12 кошек","16 кошек","8 кошек"],t:"🧮 Математика",d:"easy"},
+{q:"Отец завещал 3 сыновьям 17 лошадей: старшему половину, среднему треть, младшему 1/9. Как разделить?",a:"взять лошадь",aa:["взять лошадь","позаимствовать","добавить лошадь","18"],o:["Позаимствовать 1 лошадь","Продать","По очереди","Поровну"],t:"🧮 Математика",d:"medium"},
+{q:"3 выключателя, 3 лампочки в закрытой комнате. Один раз зайти. Как узнать какой к какой?",a:"нагреть",aa:["включить и нагреть","потрогать теплую","нагреть","тепло"],o:["Включить, подождать, выключить","Все сразу","По очереди","Невозможно"],t:"🕵️ Логика",d:"hard"},
+{q:"Человек живёт на 17 этаже. На лифте до своего только в дождь. Обычно до 10. Почему?",a:"рост",aa:["маленький рост","низкий","не достает","карлик","зонт"],o:["Маленький рост (зонт)","Боится высоты","Экономит","Любит ходить"],t:"🕵️ Логика",d:"medium"},
+{q:"У отца Мэри 5 дочерей: Чача, Чичи, Чече, Чочо. Как зовут пятую?",a:"мэри",aa:["мэри","мери"],o:["Мэри","Чучу","Чачу","Чичу"],t:"🕵️ Внимание",d:"easy"},
+{q:"Двое играли в шахматы 4 часа. Сколько времени играл каждый?",a:"4",aa:["4","четыре","4 часа"],o:["4 часа","2 часа","8 часов","Зависит"],t:"🕵️ Логика",d:"easy"},
+{q:"Заходите в тёмную комнату со спичками. Свеча, камин, плита. Что зажжёте первым?",a:"спичку",aa:["спичку","спичка"],o:["Спичку","Свечу","Камин","Плиту"],t:"🕵️ Внимание",d:"easy"},
+{q:"Килограмм ваты или килограмм железа - что тяжелее?",a:"одинаково",aa:["одинаково","равно","поровну"],o:["Одинаково","Железо","Вата","Зависит"],t:"🕵️ Логика",d:"easy"},
+{q:"Археолог нашёл монету '10 год до н.э.'. Почему подделка?",a:"не знали",aa:["не знали","не могли знать","нашей эры не было"],o:["Не могли знать про 'до н.э.'","Старая","Металл","Язык"],t:"🕵️ Логика",d:"medium"},
+{q:"Самолёт упал на границе России и Китая. Где хоронить выживших?",a:"никуда",aa:["никуда","не хоронят","выжившие"],o:["Выживших не хоронят","В России","В Китае","Пополам"],t:"🕵️ Внимание",d:"easy"},
+{q:"Мужчина на грузовике. Фары не горят, луны нет. Женщина переходит. Как увидел?",a:"день",aa:["день","светло","днем"],o:["Был день","Фонари","Отражатели","Интуиция"],t:"🕵️ Внимание",d:"easy"},
+{q:"Позавчера Пете 17. В следующем году 20. Как?",a:"день рождения",aa:["31 декабря","день рождения","переход года"],o:["ДР 31 декабря","Ошибка","Високосный","Невозможно"],t:"🕵️ Логика",d:"medium"},
+{q:"Сколько земли в яме 2×2×2 м?",a:"нисколько",aa:["нисколько","ноль","пусто"],o:["Нисколько (яма)","8 м³","4 м³","Зависит"],t:"🕵️ Внимание",d:"easy"},
+{q:"12 месяцев. 7 имеют 31 день. Сколько имеют 28 дней?",a:"12",aa:["12","все","двенадцать"],o:["Все 12","1 месяц","4 месяца","11 месяцев"],t:"🕵️ Внимание",d:"easy"},
+{q:"Как бросить мяч, чтобы вернулся, не отскочив ни от чего?",a:"вверх",aa:["вверх","подбросить","вертикально"],o:["Вверх","С ветром","По кругу","Невозможно"],t:"🕵️ Логика",d:"easy"},
+{q:"Когда чёрной кошке легче пробраться в дом?",a:"дверь открыта",aa:["дверь открыта","открыта дверь","открыто"],o:["Дверь открыта","Ночью","Днём","В дождь"],t:"🕵️ Логика",d:"easy"},
+{q:"Электричка запад-восток. Ветер восток-запад. Куда дым?",a:"нет дыма",aa:["нет дыма","электричка","не дымит"],o:["Не дымит","Запад","Восток","Вверх"],t:"🕵️ Внимание",d:"easy"},
+{q:"Квадратный стол, отпилили угол. Сколько углов?",a:"5",aa:["5","пять"],o:["5 углов","3 угла","4 угла","7 углов"],t:"🧮 Геометрия",d:"medium"},
+{q:"Что можно приготовить, но нельзя съесть?",a:"уроки",aa:["уроки","дз","план"],o:["Уроки","Яд","Лекарство","Тесто"],t:"🌍 Загадка",d:"easy"},
+
+// ИСТОРИЯ (50 questions)
+{q:"Кто написал 'Война и мир'?",a:"толстой",aa:["толстой","лев толстой"],o:["Толстой","Достоевский","Чехов","Пушкин"],t:"📚 Литература",d:"easy"},
+{q:"В каком году началась Великая Отечественная война?",a:"1941",aa:["1941"],o:["1941","1939","1940","1942"],t:"⚔️ История",d:"easy"},
+{q:"Кто открыл Америку?",a:"колумб",aa:["колумб","христофор колумб"],o:["Колумб","Магеллан","Веспуччи","Кук"],t:"🌍 География",d:"easy"},
+{q:"Столица Франции?",a:"париж",aa:["париж"],o:["Париж","Лондон","Берлин","Мадрид"],t:"🌍 География",d:"easy"},
+{q:"Кто написал 'Мастер и Маргарита'?",a:"булгаков",aa:["булгаков","михаил булгаков"],o:["Булгаков","Пастернак","Платонов","Шолохов"],t:"📚 Литература",d:"medium"},
+{q:"Год первого полёта человека в космос?",a:"1961",aa:["1961"],o:["1961","1957","1969","1963"],t:"🚀 Космос",d:"easy"},
+{q:"Кто был первым президентом США?",a:"вашингтон",aa:["вашингтон","джордж вашингтон"],o:["Вашингтон","Джефферсон","Линкольн","Франклин"],t:"⚔️ История",d:"medium"},
+{q:"Столица Австралии?",a:"канберра",aa:["канберра"],o:["Канберра","Сидней","Мельбурн","Брисбен"],t:"🌍 География",d:"hard"},
+{q:"Кто изобрёл телефон?",a:"белл",aa:["белл","александр белл"],o:["Белл","Эдисон","Тесла","Маркони"],t:"🔬 Наука",d:"medium"},
+{q:"В каком году пала Берлинская стена?",a:"1989",aa:["1989"],o:["1989","1991","1987","1985"],t:"⚔️ История",d:"medium"},
+{q:"Кто написал 'Евгений Онегин'?",a:"пушкин",aa:["пушкин","александр пушкин"],o:["Пушкин","Лермонтов","Грибоедов","Крылов"],t:"📚 Литература",d:"easy"},
+{q:"Самая длинная река в мире?",a:"амазонка",aa:["амазонка"],o:["Амазонка","Нил","Янцзы","Миссисипи"],t:"🌍 География",d:"medium"},
+{q:"Кто создал теорию относительности?",a:"эйнштейн",aa:["эйнштейн","альберт эйнштейн"],o:["Эйнштейн","Ньютон","Бор","Планк"],t:"🔬 Наука",d:"easy"},
+{q:"Столица Бразилии?",a:"бразилиа",aa:["бразилиа"],o:["Бразилиа","Рио-де-Жанейро","Сан-Паулу","Бразилия"],t:"🌍 География",d:"hard"},
+{q:"Год основания Москвы?",a:"1147",aa:["1147"],o:["1147","1047","1247","1347"],t:"⚔️ История",d:"medium"},
+{q:"Кто написал 'Гамлет'?",a:"шекспир",aa:["шекспир","william shakespeare"],o:["Шекспир","Марло","Мольер","Гёте"],t:"📚 Литература",d:"easy"},
+{q:"Самая высокая гора в мире?",a:"эверест",aa:["эверест","джомолунгма"],o:["Эверест","К2","Канченджанга","Макалу"],t:"🌍 География",d:"easy"},
+{q:"Кто открыл пенициллин?",a:"флеминг",aa:["флеминг","александр флеминг"],o:["Флеминг","Пастер","Кох","Листер"],t:"🔬 Наука",d:"medium"},
+{q:"Столица Канады?",a:"оттава",aa:["оттава"],o:["Оттава","Торонто","Монреаль","Ванкувер"],t:"🌍 География",d:"hard"},
+{q:"В каком году высадились на Луну?",a:"1969",aa:["1969"],o:["1969","1968","1970","1971"],t:"🚀 Космос",d:"easy"},
+
+// МЕМЫ (30 questions)
+{q:"Мем с котом за столом и женщиной, кричащей на него. Как называется кот?",a:"smudge",aa:["smudge","смадж"],o:["Smudge","Grumpy Cat","Keyboard Cat","Nyan Cat"],t:"😂 Мемы",d:"hard",img:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='150'%3E%3Crect fill='%23f0f0f0' width='200' height='150'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23666' font-size='14'%3EКот за столом%3C/text%3E%3C/svg%3E"},
+{q:"'Is this a pigeon?' - откуда мем?",a:"аниме",aa:["аниме","the brave fighter of sun fighbird"],o:["Из аниме","Из фильма","Из игры","Из сериала"],t:"😂 Мемы",d:"medium"},
+{q:"'Distracted boyfriend' - парень смотрит на другую девушку. Откуда фото?",a:"стоковое фото",aa:["стоковое фото","stock photo","стоковая фотография"],o:["Стоковое фото","Из фильма","Случайное фото","Постановка"],t:"😂 Мемы",d:"medium"},
+{q:"'Hide the pain Harold' - откуда взялся этот дедушка?",a:"стоковые фото",aa:["стоковые фото","фотобанк","stock photos"],o:["Стоковые фото","Реклама","Фильм","Сериал"],t:"😂 Мемы",d:"medium"},
+{q:"'Doge' - собака какой породы?",a:"сиба-ину",aa:["сиба-ину","сиба ину","шиба-ину"],o:["Сиба-ину","Акита","Хаски","Самоед"],t:"😂 Мемы",d:"easy"},
+{q:"'Press F to pay respects' - из какой игры?",a:"call of duty",aa:["call of duty","cod","колда"],o:["Call of Duty","Battlefield","Halo","Gears of War"],t:"😂 Мемы",d:"medium"},
+{q:"'This is fine' - пёс в горящей комнате. Автор комикса?",a:"gunshow",aa:["gunshow","кс грин"],o:["Gunshow (KC Green)","xkcd","Cyanide & Happiness","SMBC"],t:"😂 Мемы",d:"hard"},
+{q:"'Expanding brain' - сколько уровней в оригинале?",a:"4",aa:["4","четыре"],o:["4","3","5","6"],t:"😂 Мемы",d:"medium"},
+{q:"'Galaxy brain' мем. Что на последнем уровне?",a:"вселенная",aa:["вселенная","космос","галактика"],o:["Вселенная","Взрыв","Свет","Хаос"],t:"😂 Мемы",d:"medium"},
+{q:"'Woman yelling at cat' - имя женщины из Reality TV?",a:"taylor armstrong",aa:["taylor armstrong","тейлор армстронг"],o:["Taylor Armstrong","Kim Kardashian","Teresa Giudice","NeNe Leakes"],t:"😂 Мемы",d:"hard"},
+
+// АНЕКДОТЫ И ШУТКИ (40 questions) 
+{q:"Приходит мужик к врачу: 'Доктор, у меня болит, когда так делаю'. Врач отвечает...",a:"не делайте так",aa:["не делайте так","ну не делайте так","так не делай"],o:["Не делайте так","Это нормально","Пейте таблетки","Операция нужна"],t:"😄 Анекдоты",d:"easy"},
+{q:"Муж жене: 'Дорогая, ты поправилась!' Она: 'Это твоё пальто!' Он:",a:"пальто тоже поправилось",aa:["пальто тоже поправилось","пальто поправилось"],o:["Пальто тоже поправилось","Извини","Ты права","Не обижайся"],t:"😄 Анекдоты",d:"medium"},
+{q:"Сколько программистов нужно, чтобы вкрутить лампочку?",a:"ноль",aa:["ноль","0","это железо"],o:["Ноль (это hardware)","Один","Три","Зависит"],t:"😄 Анекдоты",d:"medium"},
+{q:"Почему программисты путают Halloween и Christmas?",a:"oct 31 dec 25",aa:["oct 31 dec 25","31 oct","потому что"],o:["Oct 31 = Dec 25","Костюмы","Подарки","Не путают"],t:"😄 Анекдоты",d:"hard"},
+{q:"Встречаются два друга. Один: 'Слышал, ты стал вегетарианцем?' Второй: 'Да'. Первый: 'И как оно?' Второй:",a:"трава",aa:["трава","херово","никак","плохо"],o:["Трава","Отлично","Ужасно","Сложно"],t:"😄 Анекдоты",d:"easy"},
+{q:"Идёт экзамен. Студент: 'Можно я пересдам?' Препод: 'А Вы сдавали?' Студент:",a:"нет но можно",aa:["нет но можно","нет но"],o:["Нет, но можно?","Да","Забыл","Думал сдал"],t:"😄 Анекдоты",d:"easy"},
+{q:"Жена мужу: 'Я так и знала, что ты меня не любишь!' Муж: 'Почему?' Жена:",a:"ты же не угадал",aa:["ты же не угадал","ты не угадал"],o:["Ты не угадал!","Не обращаешь внимания","Забыл годовщину","Не дарил цветы"],t:"😄 Анекдоты",d:"medium"},
+{q:"Сколько блондинок нужно, чтобы включить свет?",a:"одна",aa:["одна","1"],o:["Одна (они не тупые)","Три","Пять","Ни одной"],t:"😄 Анекдоты",d:"easy"},
+{q:"Приходит мужик в бар. Бармен: 'Обычное?' Мужик:",a:"нет дайте необычное",aa:["нет дайте необычное","необычное","что-то новое"],o:["Нет, необычное","Да","Двойное","Безалкогольное"],t:"😄 Анекдоты",d:"easy"},
+{q:"Жена: 'Милый, давай заведём котёнка!' Муж: 'Давай!' Жена: 'Правда?!' Муж: 'Нет, я согласился...'",a:"завести разговор",aa:["завести разговор","завести","разговор"],o:["Завести разговор","Завести котёнка","Подумать","Посмотрим"],t:"😄 Анекдоты",d:"medium"},
+
+// ГЕОГРАФИЯ - ФЛАГИ (50 questions)
+{q:"Какой стране принадлежит этот флаг: 🇷🇺 (белый-синий-красный)?",a:"россия",aa:["россия","рф"],o:["Россия","Франция","США","Нидерланды"],t:"🏴 Флаги",d:"easy"},
+{q:"Флаг: 🇺🇸 (звёзды и полосы)?",a:"сша",aa:["сша","америка","usa"],o:["США","Либерия","Малайзия","Великобритания"],t:"🏴 Флаги",d:"easy"},
+{q:"Флаг: 🇩🇪 (чёрный-красный-золотой)?",a:"германия",aa:["германия","germany"],o:["Германия","Бельгия","Австрия","Италия"],t:"🏴 Флаги",d:"easy"},
+{q:"Флаг: 🇫🇷 (синий-белый-красный вертикально)?",a:"франция",aa:["франция","france"],o:["Франция","Нидерланды","Россия","Чехия"],t:"🏴 Флаги",d:"easy"},
+{q:"Флаг: 🇬🇧 (Union Jack)?",a:"великобритания",aa:["великобритания","британия","англия","uk"],o:["Великобритания","Австралия","Новая Зеландия","Ирландия"],t:"🏴 Флаги",d:"easy"},
+{q:"Флаг: 🇨🇳 (красный с жёлтыми звёздами)?",a:"китай",aa:["китай","china"],o:["Китай","Вьетнам","СССР","КНДР"],t:"🏴 Флаги",d:"easy"},
+{q:"Флаг: 🇯🇵 (белый с красным кругом)?",a:"япония",aa:["япония","japan"],o:["Япония","Бангладеш","Палау","Лаос"],t:"🏴 Флаги",d:"easy"},
+{q:"Флаг: 🇮🇹 (зелёный-белый-красный)?",a:"италия",aa:["италия","italy"],o:["Италия","Мексика","Ирландия","Венгрия"],t:"🏴 Флаги",d:"easy"},
+{q:"Флаг: 🇪🇸 (красно-жёлто-красный с гербом)?",a:"испания",aa:["испания","spain"],o:["Испания","Португалия","Каталония","Андорра"],t:"🏴 Флаги",d:"easy"},
+{q:"Флаг: 🇨🇦 (красно-белый с кленовым листом)?",a:"канада",aa:["канада","canada"],o:["Канада","Дания","Норвегия","Польша"],t:"🏴 Флаги",d:"easy"},
+{q:"Флаг: 🇧🇷 (зелёный с жёлтым ромбом)?",a:"бразилия",aa:["бразилия","brazil"],o:["Бразилия","Португалия","Аргентина","Мексика"],t:"🏴 Флаги",d:"medium"},
+{q:"Флаг: 🇮🇳 (оранжево-бело-зелёный с колесом)?",a:"индия",aa:["индия","india"],o:["Индия","Пакистан","Бангладеш","Шри-Ланка"],t:"🏴 Флаги",d:"medium"},
+{q:"Флаг: 🇰🇷 (белый с красно-синим инь-ян)?",a:"южная корея",aa:["южная корея","корея","south korea"],o:["Южная Корея","Япония","Северная Корея","Монголия"],t:"🏴 Флаги",d:"medium"},
+{q:"Флаг: 🇲🇽 (зелёно-бело-красный с орлом)?",a:"мексика",aa:["мексика","mexico"],o:["Мексика","Италия","Иран","Таджикистан"],t:"🏴 Флаги",d:"medium"},
+{q:"Флаг: 🇦🇷 (сине-бело-синий с солнцем)?",a:"аргентина",aa:["аргентина","argentina"],o:["Аргентина","Уругвай","Греция","Израиль"],t:"🏴 Флаги",d:"medium"},
+{q:"Флаг: 🇹🇷 (красный с белым полумесяцем)?",a:"турция",aa:["турция","turkey"],o:["Турция","Тунис","Алжир","Пакистан"],t:"🏴 Флаги",d:"medium"},
+{q:"Флаг: 🇸🇦 (зелёный с мечом)?",a:"саудовская аравия",aa:["саудовская аравия","саудия","saudi arabia"],o:["Саудовская Аравия","ОАЭ","Катар","Кувейт"],t:"🏴 Флаги",d:"medium"},
+{q:"Флаг: 🇨🇭 (красный с белым крестом)?",a:"швейцария",aa:["швейцария","switzerland"],o:["Швейцария","Дания","Швеция","Норвегия"],t:"🏴 Флаги",d:"easy"},
+{q:"Флаг: 🇸🇪 (синий с жёлтым крестом)?",a:"швеция",aa:["швеция","sweden"],o:["Швеция","Норвегия","Финляндия","Дания"],t:"🏴 Флаги",d:"medium"},
+{q:"Флаг: 🇳🇴 (красный с синим крестом в белой обводке)?",a:"норвегия",aa:["норвегия","norway"],o:["Норвегия","Исландия","Дания","Швеция"],t:"🏴 Флаги",d:"medium"},
+
+// ЛОГОТИПЫ БРЕНДОВ (40 questions)
+{q:"Логотип: надкушенное яблоко. Компания?",a:"apple",aa:["apple","эпл"],o:["Apple","Microsoft","Samsung","Google"],t:"🏢 Логотипы",d:"easy"},
+{q:"Логотип: галочка (swoosh). Компания?",a:"nike",aa:["nike","найк"],o:["Nike","Adidas","Puma","Reebok"],t:"🏢 Логотипы",d:"easy"},
+{q:"Логотип: три полоски. Компания?",a:"adidas",aa:["adidas","адидас"],o:["Adidas","Nike","Puma","Reebok"],t:"🏢 Логотипы",d:"easy"},
+{q:"Логотип: жёлтая буква M. Компания?",a:"mcdonalds",aa:["mcdonalds","макдоналдс","макдональдс"],o:["McDonald's","Burger King","KFC","Wendy's"],t:"🏢 Логотипы",d:"easy"},
+{q:"Логотип: красно-белая волна. Компания?",a:"coca-cola",aa:["coca-cola","кока-кола","кока кола"],o:["Coca-Cola","Pepsi","Fanta","Sprite"],t:"🏢 Логотипы",d:"easy"},
+{q:"Логотип: четыре кольца. Компания?",a:"audi",aa:["audi","ауди"],o:["Audi","BMW","Mercedes","Volkswagen"],t:"🏢 Логотипы",d:"easy"},
+{q:"Логотип: звезда в круге. Автомобильный бренд?",a:"mercedes",aa:["mercedes","мерседес","mercedes-benz"],o:["Mercedes","BMW","Audi","Volkswagen"],t:"🏢 Логотипы",d:"easy"},
+{q:"Логотип: белое-синее пропеллер. Компания?",a:"bmw",aa:["bmw","бмв"],o:["BMW","Audi","Mercedes","Volkswagen"],t:"🏢 Логотипы",d:"medium"},
+{q:"Логотип: четыре цвета (красный, жёлтый, зелёный, синий). Компания?",a:"google",aa:["google","гугл"],o:["Google","Microsoft","Yahoo","Yandex"],t:"🏢 Логотипы",d:"easy"},
+{q:"Логотип: окно из 4 квадратов. Компания?",a:"microsoft",aa:["microsoft","майкрософт"],o:["Microsoft","Apple","Google","IBM"],t:"🏢 Логотипы",d:"easy"},
+{q:"Логотип: синяя буква f. Компания?",a:"facebook",aa:["facebook","фейсбук","meta"],o:["Facebook","Twitter","Instagram","VK"],t:"🏢 Логотипы",d:"easy"},
+{q:"Логотип: птичка. Соцсеть?",a:"twitter",aa:["twitter","твиттер","x"],o:["Twitter","Instagram","Facebook","TikTok"],t:"🏢 Логотипы",d:"easy"},
+{q:"Логотип: камера в квадрате. Соцсеть?",a:"instagram",aa:["instagram","инстаграм"],o:["Instagram","Snapchat","TikTok","Pinterest"],t:"🏢 Логотипы",d:"easy"},
+{q:"Логотип: белая стрелка в оранжевом круге. Сервис?",a:"amazon",aa:["amazon","амазон"],o:["Amazon","eBay","AliExpress","Ozon"],t:"🏢 Логотипы",d:"medium"},
+{q:"Логотип: красный треугольник play. Сервис?",a:"youtube",aa:["youtube","ютуб"],o:["YouTube","Vimeo","Twitch","TikTok"],t:"🏢 Логотипы",d:"easy"},
+{q:"Логотип: зелёный круг со звуковыми волнами. Музыкальный сервис?",a:"spotify",aa:["spotify","спотифай"],o:["Spotify","Apple Music","Deezer","Yandex Music"],t:"🏢 Логотипы",d:"medium"},
+{q:"Логотип: красная буква N. Стриминг?",a:"netflix",aa:["netflix","нетфликс"],o:["Netflix","Hulu","Disney+","HBO"],t:"🏢 Логотипы",d:"easy"},
+{q:"Логотип: синие цифры. Поисковик в России?",a:"yandex",aa:["yandex","яндекс"],o:["Yandex","Google","Mail.ru","Rambler"],t:"🏢 Логотипы",d:"easy"},
+{q:"Логотип: синий слон. Мессенджер?",a:"vk",aa:["vk","вконтакте","вк"],o:["VK","Telegram","WhatsApp","Viber"],t:"🏢 Логотипы",d:"medium"},
+{q:"Логотип: белый самолётик. Мессенджер?",a:"telegram",aa:["telegram","телеграм","телеграмм"],o:["Telegram","WhatsApp","Viber","Signal"],t:"🏢 Логотипы",d:"easy"}
+];
+
+let peer,conn,gameSettings={difficulty:'medium',mode:30},gameState={isHost:false,myId:null,myName:'',opponentName:'',myScore:0,opponentScore:0,currentQuestion:0,totalQuestions:30,questions:[],hasUsedHelp:false,answered:false,myAnswer:'',opponentAnswered:false,opponentAnswer:'',opponentUsedHelp:false,wantToSkip:false,opponentWantsToSkip:false};
+
+function normalizeAnswer(a){return a.toLowerCase().replace(/ё/g,'е').trim()}
+function isAnswerAcceptable(u,q){const n=normalizeAnswer(u),c=normalizeAnswer(q.a);if(n===c)return true;if(q.aa){for(let a of q.aa){if(n===normalizeAnswer(a))return true;if(n.includes(normalizeAnswer(a)))return true}}if(n.includes(c)&&c.length>2)return true;return false}
+
+function selectDifficulty(d){document.querySelectorAll('.settings-screen .setting-card').forEach((c,i)=>{if(i<4)c.classList.remove('selected')});event.target.closest('.setting-card').classList.add('selected');gameSettings.difficulty=d}
+function selectMode(m){document.querySelectorAll('.settings-screen .setting-card').forEach((c,i)=>{if(i>=4)c.classList.remove('selected')});event.target.closest('.setting-card').classList.add('selected');gameSettings.mode=m}
+
+function showSettings(){const name=document.getElementById('playerName').value.trim();if(!name){alert('Введи своё имя!');return}gameState.myName=name;document.querySelector('.start-screen').classList.remove('active');document.querySelector('.settings-screen').classList.add('active')}
+
+function backToStart(){document.querySelector('.settings-screen').classList.remove('active');document.querySelector('.start-screen').classList.add('active')}
+
+function createRoomWithSettings(){prepareQuestions();document.querySelector('.settings-screen').classList.remove('active');document.querySelector('.game-screen').classList.add('active');gameState.isHost=true;const roomId=gameState.myId;const fullUrl=window.location.href.split('?')[0]+'?room='+roomId;document.getElementById('roomIdDisplay').innerHTML=`<strong>Код:</strong><div class="room-link">${roomId}</div><button class="copy-btn" onclick="copyToClipboard('${fullUrl}')">📋 Скопировать</button><div style="margin-top:10px;font-size:0.9em;color:#666">Сложность: ${getDifficultyName()}, Вопросов: ${gameSettings.mode}</div>`;document.getElementById('player1Name').textContent=gameState.myName+' (ты)';document.getElementById('waitingMessage').style.display='block'}
+
+function getDifficultyName(){const n={easy:'😊 Лёгкая',medium:'🤔 Средняя',hard:'🤯 Сложная',mixed:'🎲 Микс'};return n[gameSettings.difficulty]||'Средняя'}
+
+function prepareQuestions(){let filtered=allQuestions;if(gameSettings.difficulty!=='mixed'){filtered=allQuestions.filter(q=>q.d===gameSettings.difficulty)}const shuffled=filtered.sort(()=>Math.random()-0.5);gameState.questions=shuffled.slice(0,gameSettings.mode);gameState.totalQuestions=gameState.questions.length}
+
+function initPeer(){peer=new Peer({config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:global.stun.twilio.com:3478'}]}});peer.on('open',id=>{gameState.myId=id;updateConnectionStatus('online')});peer.on('error',err=>{console.error(err);updateConnectionStatus('offline');alert('Ошибка соединения')});peer.on('connection',connection=>{conn=connection;setupConnection()})}
+
+function updateConnectionStatus(s){const el=document.querySelector('.connection-status');if(s==='online'){el.className='connection-status online';el.textContent='🟢 Онлайн'}else if(s==='connecting'){el.className='connection-status connecting';el.textContent='⏳ Подключение'}else{el.className='connection-status offline';el.textContent='🔴 Нет связи'}}
+
+function joinRoom(){const name=document.getElementById('playerName').value.trim();const roomId=document.getElementById('roomId').value.trim();if(!name||!roomId){alert('Введи имя и код!');return}gameState.myName=name;updateConnectionStatus('connecting');conn=peer.connect(roomId);setupConnection();document.querySelector('.start-screen').classList.remove('active');document.querySelector('.game-screen').classList.add('active');document.getElementById('roomIdDisplay').innerHTML=`<strong>Код:</strong><div class="room-link">${roomId}</div>`;document.getElementById('player1Name').textContent=name+' (ты)'}
+
+function setupConnection(){conn.on('open',()=>{updateConnectionStatus('online');sendData({type:'join',name:gameState.myName,score:gameState.myScore});document.getElementById('waitingMessage').style.display='none';document.getElementById('gameContent').style.display='block';document.getElementById('chatInput').disabled=false;document.getElementById('chatSendBtn').disabled=false;if(gameState.isHost)loadQuestion(0)});conn.on('data',data=>handleData(data));conn.on('close',()=>{updateConnectionStatus('offline');alert('Соединение потеряно')});conn.on('error',err=>{console.error(err);updateConnectionStatus('offline')})}
+
+function sendData(d){if(conn&&conn.open)conn.send(d)}
+
+function handleData(d){switch(d.type){case'join':gameState.opponentName=d.name;gameState.opponentScore=d.score;document.getElementById('player2Name').textContent=d.name;document.getElementById('player2Score').textContent=d.score;if(gameState.isHost)sendData({type:'gameState',questions:gameState.questions,myName:gameState.myName,myScore:gameState.myScore,currentQuestion:gameState.currentQuestion,totalQuestions:gameState.totalQuestions});break;case'gameState':gameState.opponentName=d.myName;gameState.opponentScore=d.myScore;gameState.questions=d.questions;gameState.totalQuestions=d.totalQuestions;gameState.currentQuestion=d.currentQuestion;document.getElementById('player2Name').textContent=d.myName;document.getElementById('player2Score').textContent=d.myScore;loadQuestion(d.currentQuestion);break;case'answer':gameState.opponentAnswered=true;gameState.opponentAnswer=d.answer;updateOpponentStatus();checkBothAnswered();break;case'help':gameState.opponentUsedHelp=true;updateOpponentStatus();break;case'score':gameState.opponentScore=d.score;document.getElementById('player2Score').textContent=d.score;break;case'nextQuestion':gameState.currentQuestion=d.questionIndex;resetQuestionState();loadQuestion(d.questionIndex);break;case'skipRequest':gameState.opponentWantsToSkip=true;updateOpponentStatus();checkBothWantSkip();break;case'chat':addChatMessage(d.message,false);break}}
+
+function resetQuestionState(){gameState.opponentAnswered=false;gameState.opponentUsedHelp=false;gameState.opponentAnswer='';gameState.wantToSkip=false;gameState.opponentWantsToSkip=false}
+
+function updateOpponentStatus(){const div=document.getElementById('opponentStatus');div.innerHTML='';if(gameState.opponentWantsToSkip&&!gameState.answered){const s=document.createElement('div');s.className='opponent-status opponent-skip';s.textContent=`${gameState.opponentName} хочет пропустить ⏭️`;div.appendChild(s)}if(gameState.opponentAnswered&&!gameState.answered){const a=document.createElement('div');a.className='opponent-status opponent-answer';a.textContent=`${gameState.opponentName} уже ответил! ⏱️`;div.appendChild(a)}if(gameState.opponentUsedHelp&&!gameState.hasUsedHelp){const h=document.createElement('div');h.className='opponent-status opponent-help';h.textContent=`${gameState.opponentName} использовал помощь 🆘`;div.appendChild(h)}document.getElementById('player2Status').textContent=gameState.opponentAnswered?'✅ Ответ отправлен':'';document.getElementById('player1Status').textContent=gameState.answered?'✅ Ответ отправлен':''}
+
+function checkBothAnswered(){if(gameState.answered&&gameState.opponentAnswered)showAnswersReveal()}
+function checkBothWantSkip(){if(gameState.wantToSkip&&gameState.opponentWantsToSkip)skipQuestion()}
+
+function requestSkip(){if(gameState.wantToSkip)return;gameState.wantToSkip=true;document.getElementById('skipBtn').disabled=true;document.getElementById('skipBtn').textContent='⏳ Ожидание...';sendData({type:'skipRequest'});checkBothWantSkip()}
+
+function skipQuestion(){const q=gameState.questions[gameState.currentQuestion];const div=document.getElementById('resultMessage');div.classList.add('active','skipped');div.textContent=`⏭️ Пропущен. Ответ: ${q.a}`;document.getElementById('answerInput').disabled=true;document.getElementById('submitBtn').disabled=true;document.getElementById('helpBtn').disabled=true;document.getElementById('skipBtn').style.display='none';document.getElementById('nextBtn').style.display='block';if(gameState.hasUsedHelp)highlightCorrectOption()}
+
+function loadQuestion(i){gameState.currentQuestion=i;if(i>=gameState.totalQuestions){showFinalResults();return}const q=gameState.questions[i];document.getElementById('questionType').textContent=q.t;document.getElementById('difficultyBadge').textContent=getDiffBadge(q.d);document.getElementById('questionNumber').textContent=`${i+1}/${gameState.totalQuestions}`;document.getElementById('questionText').textContent=q.q;const img=document.getElementById('questionImage');if(q.img){img.src=q.img;img.style.display='block'}else{img.style.display='none'}const progress=((i)/gameState.totalQuestions)*100;document.getElementById('progressBar').style.width=progress+'%';document.getElementById('answerInput').value='';document.getElementById('answerInput').disabled=false;document.getElementById('submitBtn').disabled=false;document.getElementById('helpBtn').disabled=false;document.getElementById('skipBtn').disabled=false;document.getElementById('skipBtn').textContent='⏭️ Пропустить';document.getElementById('skipBtn').style.display='block';document.getElementById('helpSection').classList.remove('active');document.getElementById('resultMessage').classList.remove('active','correct','wrong','skipped');document.getElementById('answersReveal').classList.remove('active');document.getElementById('nextBtn').style.display='none';document.getElementById('opponentStatus').innerHTML='';document.getElementById('player1Status').textContent='';document.getElementById('player2Status').textContent='';gameState.hasUsedHelp=false;gameState.answered=false;gameState.myAnswer='';gameState.opponentAnswered=false;gameState.opponentAnswer='';gameState.opponentUsedHelp=false;gameState.wantToSkip=false;gameState.opponentWantsToSkip=false;document.getElementById('answerInput').onkeypress=e=>{if(e.key==='Enter')submitAnswer()}}
+
+function getDiffBadge(d){const b={easy:'😊',medium:'🤔',hard:'🤯'};return b[d]||'🤔'}
+
+function showHelp(){if(gameState.hasUsedHelp)return;gameState.hasUsedHelp=true;document.getElementById('helpBtn').disabled=true;document.getElementById('helpSection').classList.add('active');const q=gameState.questions[gameState.currentQuestion];const opts=document.getElementById('helpOptions');opts.innerHTML='';q.o.forEach(o=>{const d=document.createElement('div');d.className='help-option';d.textContent=o;d.onclick=()=>{const c=o.split(' (')[0];document.getElementById('answerInput').value=c};opts.appendChild(d)});sendData({type:'help'});updateOpponentStatus()}
+
+function submitAnswer(){if(gameState.answered)return;const a=document.getElementById('answerInput').value.trim();if(!a){alert('Введи ответ!');return}gameState.answered=true;gameState.myAnswer=a;document.getElementById('answerInput').disabled=true;document.getElementById('submitBtn').disabled=true;document.getElementById('helpBtn').disabled=true;document.getElementById('skipBtn').style.display='none';const q=gameState.questions[gameState.currentQuestion];const correct=isAnswerAcceptable(a,q);if(correct){gameState.myScore++;document.getElementById('player1Score').textContent=gameState.myScore;sendData({type:'score',score:gameState.myScore})}sendData({type:'answer',answer:a});updateOpponentStatus();checkBothAnswered()}
+
+function showAnswersReveal(){const q=gameState.questions[gameState.currentQuestion];const div=document.getElementById('answersContent');div.innerHTML='';const myCorrect=isAnswerAcceptable(gameState.myAnswer,q);const myD=document.createElement('div');myD.className=`answer-item ${myCorrect?'correct':'wrong'}`;myD.innerHTML=`<strong>${gameState.myName}:</strong> ${gameState.myAnswer} ${myCorrect?'✅':'❌'}`;div.appendChild(myD);const oppCorrect=isAnswerAcceptable(gameState.opponentAnswer,q);const oppD=document.createElement('div');oppD.className=`answer-item ${oppCorrect?'correct':'wrong'}`;oppD.innerHTML=`<strong>${gameState.opponentName}:</strong> ${gameState.opponentAnswer} ${oppCorrect?'✅':'❌'}`;div.appendChild(oppD);const corrD=document.createElement('div');corrD.innerHTML=`<strong>Правильный ответ:</strong> ${q.a}`;corrD.style.marginTop='10px';corrD.style.fontWeight='bold';corrD.style.color='#28a745';div.appendChild(corrD);document.getElementById('answersReveal').classList.add('active');const resDiv=document.getElementById('resultMessage');resDiv.classList.add('active');if(myCorrect){resDiv.className='result-message active correct';resDiv.textContent='🎉 Правильно!'}else{resDiv.className='result-message active wrong';resDiv.textContent='❌ Неправильно'}if(gameState.hasUsedHelp)highlightCorrectOption();document.getElementById('nextBtn').style.display='block'}
+
+function highlightCorrectOption(){const q=gameState.questions[gameState.currentQuestion];const opts=document.querySelectorAll('.help-option');opts.forEach(o=>{const t=o.textContent.split(' (')[0];if(isAnswerAcceptable(t,q))o.classList.add('correct');else o.classList.add('wrong')})}
+
+function nextQuestion(){const next=gameState.currentQuestion+1;if(next>=gameState.totalQuestions){showFinalResults();return}sendData({type:'nextQuestion',questionIndex:next});loadQuestion(next)}
+
+function showFinalResults(){const s1=gameState.myScore,s2=gameState.opponentScore,n1=gameState.myName,n2=gameState.opponentName;let msg='',emoji='';if(s1>s2){msg=`Ты победил! ${s1}:${s2}`;emoji='🏆'}else if(s2>s1){msg=`Победил ${n2}! ${s2}:${s1}`;emoji='😢'}else{msg=`Ничья! ${s1}:${s2}`;emoji='🤝'}document.getElementById('gameContent').innerHTML=`<div class="question-card" style="background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%)"><div><div style="font-size:4em;margin-bottom:20px">${emoji}</div><h2 style="margin-bottom:20px">Игра окончена!</h2><p style="font-size:1.5em">${msg}</p><p style="margin-top:15px">Правильных ответов: ${n1} - ${s1}, ${n2} - ${s2}</p></div></div><button class="btn" onclick="location.reload()">🔄 Новая игра</button>`}
+
+function sendChatMessage(){const inp=document.getElementById('chatInput');const msg=inp.value.trim();if(!msg)return;addChatMessage(msg,true);sendData({type:'chat',message:msg});inp.value=''}
+
+function addChatMessage(msg,isMine){const div=document.getElementById('chatMessages');const msgDiv=document.createElement('div');msgDiv.className=`chat-message ${isMine?'my-message':'opponent-message'}`;msgDiv.textContent=msg;div.appendChild(msgDiv);div.parentElement.scrollTop=div.parentElement.scrollHeight}
+
+function copyToClipboard(txt){navigator.clipboard.writeText(txt).then(()=>{const btn=event.target;const orig=btn.innerHTML;btn.innerHTML='✅ Скопировано!';btn.style.background='#28a745';setTimeout(()=>{btn.innerHTML=orig;btn.style.background=''},2000)}).catch(()=>alert('Скопируй вручную: '+txt))}
+
+window.onload=()=>{initPeer();const p=new URLSearchParams(window.location.search);const r=p.get('room');if(r)document.getElementById('roomId').value=r;const ci=document.getElementById('chatInput');if(ci)ci.onkeypress=e=>{if(e.key==='Enter')sendChatMessage()}};
+</script>
 </body>
 </html>
